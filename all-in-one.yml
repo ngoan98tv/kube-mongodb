@@ -105,6 +105,8 @@ spec:
               readOnly: true
             - name: mongodb-data
               mountPath: /data/db
+      nodeSelector:
+        kubernetes.io/hostname: lmsdev.shop
       volumes:
         - name: mongodb-volume
           secret:
