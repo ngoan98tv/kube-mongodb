@@ -12,7 +12,7 @@ spec:
   persistentVolumeReclaimPolicy: Retain
   storageClassName: mongodb-volume
   local:
-    path: /home/lmsmaker/kube-mongodb
+    path: /mnt/kube-mongodb
   nodeAffinity:
     required:
       nodeSelectorTerms:
