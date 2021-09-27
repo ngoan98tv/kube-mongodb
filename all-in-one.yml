@@ -1,17 +1,35 @@
 apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mongodb-config
+  namespace: mongodb
+data:
+  mongo.conf: |
+    storage:
+      dbPath: /data/db
+---
+
+apiVersion: v1
 kind: Namespace
 metadata:
   name: mongodb
 ---
-kind: StorageClass
-apiVersion: storage.k8s.io/v1
+
+kind: PersistentVolumeClaim
+apiVersion: v1
 metadata:
-  name: mongodb-volume
+  name: mongodb-volume-claim
   namespace: mongodb
-provisioner: kubernetes.io/no-provisioner
-volumeBindingMode: WaitForFirstConsumer
-allowVolumeExpansion: true
+spec:
+  storageClassName: mongodb-volume
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 1Gi
 ---
+
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -30,26 +48,13 @@ spec:
   nodeAffinity:
     required:
       nodeSelectorTerms:
-      - matchExpressions:
-        - key: kubernetes.io/hostname
-          operator: In
-          values:
-          - lmsdev.shop
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - lmsdev.shop
 ---
-kind: PersistentVolumeClaim
-apiVersion: v1
-metadata:
-  name: mongodb-volume-claim
-  namespace: mongodb
-spec:
-  storageClassName: mongodb-volume
-  accessModes:
-    - ReadWriteOnce
-  volumeMode: Filesystem
-  resources:
-    requests:
-      storage: 1Gi
----
+
 apiVersion: v1
 kind: Secret
 metadata:
@@ -62,16 +67,24 @@ data:
   MONGO_USERNAME: dXNlcgo=
   MONGO_PASSWORD: cGFzc3dvcmQK
 ---
+
 apiVersion: v1
-kind: ConfigMap
+kind: Service
 metadata:
-  name: mongodb-config
+  name: mongodb
   namespace: mongodb
-data:
-  mongo.conf: |
-    storage:
-      dbPath: /data/db
+  labels:
+    app: mongodb
+spec:
+  selector:
+    app: mongodb
+  ports:
+    - name: mongodb
+      protocol: TCP
+      port: 27017
+      targetPort: 27017
 ---
+
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -134,19 +147,14 @@ spec:
           persistentVolumeClaim:
             claimName: mongodb-volume-claim
 ---
-apiVersion: v1
-kind: Service
+
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
 metadata:
-  name: mongodb
+  name: mongodb-volume
   namespace: mongodb
-  labels:
-    app: mongodb
-spec:
-  selector:
-    app: mongodb
-  ports:
-    - name: mongodb
-      protocol: TCP
-      port: 27017
-      targetPort: 27017
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
 ---
+

@@ -16,9 +16,10 @@ spec:
   nodeAffinity:
     required:
       nodeSelectorTerms:
-      - matchExpressions:
-        - key: kubernetes.io/hostname
-          operator: In
-          values:
-          - lmsdev.shop
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - lmsdev.shop
 ---
+
